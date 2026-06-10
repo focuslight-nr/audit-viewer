@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AUDIT-VIEWER</title>
+<style>
+:root{
+  --bg:#0d1117;--panel:#161b22;--border:#21262d;--fg:#e6edf3;--muted:#8b949e;
+  --accent:#58a6ff;--warn-bg:#5c1f1f;--warn-fg:#ffa198;--review-bg:#3d2f00;--review-fg:#f0c846;
+  --info-bg:#0c2a4a;--info-fg:#79c0ff;--add:#2ea043;--del:#f85149;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans",sans-serif;font-size:14px}
+header{display:flex;align-items:center;gap:16px;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--panel)}
+header h1{font-size:18px;margin:0}
+header .sub{color:var(--muted);font-size:12px}
+main{max-width:1280px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:340px 1fr;gap:20px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px}
+.panel h2{margin:0 0 12px;font-size:15px}
+button{background:#21262d;color:var(--fg);border:1px solid #30363d;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px}
+button:hover{border-color:var(--accent)}
+button.primary{background:#1f6feb;border-color:#1f6feb}
+button.danger{color:var(--del)}
+button:disabled{opacity:.5;cursor:default}
+select{background:#0d1117;color:var(--fg);border:1px solid #30363d;border-radius:6px;padding:6px 8px;font-size:13px;max-width:100%}
+.runrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.snaplist{list-style:none;margin:0;padding:0;max-height:480px;overflow-y:auto}
+.snaplist li{padding:8px 10px;border:1px solid transparent;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.snaplist li:hover{background:#1c2128}
+.snaplist li.sel{border-color:var(--accent);background:#0c2a4a33}
+.snapmeta{min-width:0}
+.snapmeta .name{font-weight:600;font-size:13px}
+.snapmeta .when{color:var(--muted);font-size:11px}
+.counts{display:flex;gap:4px;flex-shrink:0}
+.badge{display:inline-block;border-radius:4px;padding:1px 7px;font-weight:700;font-size:11px}
+.warn{background:var(--warn-bg);color:var(--warn-fg)}
+.review{background:var(--review-bg);color:var(--review-fg)}
+.info{background:var(--info-bg);color:var(--info-fg)}
+.tool-claude{color:#d2a8ff}.tool-codex{color:#7ee787}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;background:#161b22;position:sticky;top:0}
+code{color:#cae8ff;white-space:pre-wrap;word-break:break-word;font-size:12px}
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap}
+.tabs button{border:none;background:none;color:var(--muted);padding:5px 12px;border-radius:6px}
+.tabs button.active{background:#21262d;color:var(--fg)}
+.diff-add{color:#7ee787}
+.diff-del{color:#ffa198}
+.diff-add::before{content:"+ "}
+.diff-del::before{content:"− "}
+.muted{color:var(--muted)}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.summary-grid div{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:10px}
+.summary-grid span{display:block;color:var(--muted);font-size:11px}
+.summary-grid strong{font-size:22px}
+.delta-up{color:var(--del);font-size:12px}.delta-down{color:var(--add);font-size:12px}
+.section-block{margin-bottom:18px}
+.section-block h3{font-size:14px;margin:0 0 6px;color:var(--accent)}
+ul.flat{margin:4px 0;padding-left:0;list-style:none}
+ul.flat li{padding:3px 0;font-size:13px;word-break:break-word}
+.filterrow{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filterrow label{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);cursor:pointer}
+#status{font-size:12px;color:var(--muted);min-height:18px;margin-top:6px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>AUDIT-VIEWER</h1>
+  <span class="sub">claude-audit / codex-audit — run, browse, compare</span>
+  <span style="margin-left:auto">
+    <button id="langBtn" onclick="toggleLang()"></button>
+  </span>
+</header>
+<main>
+  <div>
+    <div class="panel" style="margin-bottom:16px">
+      <h2 data-i18n="run_title"></h2>
+      <div class="runrow">
+        <select id="toolSel"></select>
+        <button class="primary" id="runBtn" onclick="runAudit()" data-i18n="run_btn"></button>
+      </div>
+      <div id="status"></div>
+    </div>
+    <div class="panel">
+      <h2><span data-i18n="snapshots_title"></span> <span class="muted" id="snapCount"></span></h2>
+      <p class="muted" style="font-size:12px;margin:0 0 8px" data-i18n="snapshots_hint"></p>
+      <ul class="snaplist" id="snapList"></ul>
+    </div>
+  </div>
+  <div class="panel" id="content"></div>
+</main>
+<script>
+// ---------- i18n ----------
+const I18N = {
+  en: {
+    run_title: "Run audit",
+    run_btn: "Run",
+    snapshots_title: "Snapshots",
+    snapshots_hint: "Click to view. Select two (same tool) to compare.",
+    no_snapshots: "No snapshots",
+    placeholder: "Select a snapshot on the left, or run an audit.",
+    delete: "Delete",
+    delete_confirm: (f) => `Delete ${f}?`,
+    not_found: " (not found)",
+    compare_title: "Compare:",
+    compare_range: (o, n) => `Old: ${o} → New: ${n}`,
+    diff_tool_mismatch: (a, b) => `Cannot compare snapshots from different tools (${a} vs ${b}).`,
+    no_changes: "No changes detected.",
+    findings_changes: "Findings changes",
+    running: (t) => `Running ${t}-audit…`,
+    done: (r) => `Done: ${r.file} (WARN=${r.summary.warn} REVIEW=${r.summary.review} INFO=${r.summary.info})`,
+    error: "Error: ",
+    lang_btn: "日本語",
+  },
+  ja: {
+    run_title: "監査を実行",
+    run_btn: "実行",
+    snapshots_title: "スナップショット",
+    snapshots_hint: "クリックで表示。2つ選択（同ツール）で比較。",
+    no_snapshots: "スナップショットなし",
+    placeholder: "左でスナップショットを選択するか、監査を実行してください。",
+    delete: "削除",
+    delete_confirm: (f) => `${f} を削除しますか？`,
+    not_found: "（見つかりません）",
+    compare_title: "比較:",
+    compare_range: (o, n) => `旧: ${o} → 新: ${n}`,
+    diff_tool_mismatch: (a, b) => `異なるツールのスナップショットは比較できません（${a} vs ${b}）。`,
+    no_changes: "変更はありません。",
+    findings_changes: "Findings の変化",
+    running: (t) => `${t}-audit 実行中…`,
+    done: (r) => `完了: ${r.file} (WARN=${r.summary.warn} REVIEW=${r.summary.review} INFO=${r.summary.info})`,
+    error: "エラー: ",
+    lang_btn: "English",
+  },
+};
+let lang = localStorage.getItem("audit-viewer-lang") || "en";
+const t = (key, ...args) => {
+  const v = I18N[lang][key];
+  return typeof v === "function" ? v(...args) : v;
+};
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.getElementById("langBtn").textContent = t("lang_btn");
+}
+
+function toggleLang() {
+  lang = lang === "en" ? "ja" : "en";
+  localStorage.setItem("audit-viewer-lang", lang);
+  applyLang();
+  loadTools();
+  loadSnapshots().then(render);
+}
+
+let snapshots = [];
+let selected = [];   // up to 2 snapshot file names
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+function fmtTaken(ts) { // 20260610T144500Z -> 2026-06-10 14:45:00 UTC
+  const m = ts.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+  return m ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}:${m[6]} UTC` : ts;
+}
+
+async function loadTools() {
+  const tools = await api("/api/tools");
+  $("toolSel").innerHTML = Object.entries(tools).map(([id, tl]) =>
+    `<option value="${id}" ${tl.available ? "" : "disabled"}>${esc(tl.label)}${tl.available ? "" : t("not_found")}</option>`
+  ).join("");
+}
+
+async function loadSnapshots() {
+  snapshots = await api("/api/snapshots");
+  selected = selected.filter(f => snapshots.some(s => s.file === f));
+  $("snapCount").textContent = `(${snapshots.length})`;
+  $("snapList").innerHTML = snapshots.map(s => `
+    <li class="${selected.includes(s.file) ? "sel" : ""}" onclick="toggleSelect('${s.file}')">
+      <div class="snapmeta">
+        <div class="name tool-${s.tool}">${esc(s.tool)}</div>
+        <div class="when">${fmtTaken(s.taken_at)}<br>${esc(s.username)}@${esc(s.hostname)}</div>
+      </div>
+      <div class="counts">
+        <span class="badge warn">${s.summary.warn ?? "?"}</span>
+        <span class="badge review">${s.summary.review ?? "?"}</span>
+        <span class="badge info">${s.summary.info ?? "?"}</span>
+      </div>
+    </li>`).join("") || `<li class="muted">${t("no_snapshots")}</li>`;
+}
+
+function toggleSelect(file) {
+  if (selected.includes(file)) {
+    selected = selected.filter(f => f !== file);
+  } else {
+    selected.push(file);
+    if (selected.length > 2) selected.shift();
+  }
+  loadSnapshots().then(render);
+}
+
+async function render() {
+  if (selected.length === 0) {
+    $("content").innerHTML = `<p class="muted">${t("placeholder")}</p>`;
+  } else if (selected.length === 1) {
+    await renderSingle(selected[0]);
+  } else {
+    await renderDiff();
+  }
+}
+
+// ---------- single snapshot view ----------
+let curData = null, curFile = null, curTab = "findings", sevFilter = {WARN:true, REVIEW:true, INFO:true};
+
+async function renderSingle(file) {
+  curFile = file;
+  curData = await api("/api/snapshot?file=" + encodeURIComponent(file));
+  drawSingle();
+}
+
+function drawSingle() {
+  const d = curData, s = d.summary || {};
+  const meta = snapshots.find(x => x.file === curFile) || {};
+  const invTabs = Object.keys(d).filter(k =>
+    Array.isArray(d[k]) && k !== "findings" && d[k].length && typeof d[k][0] === "object");
+  if (!invTabs.includes(curTab) && curTab !== "findings") curTab = "findings";
+
+  let html = `
+    <h2><span class="tool-${meta.tool}">${esc(meta.tool || "")}</span> — ${esc(curFile)}
+      <button class="danger" style="float:right" onclick="delSnap('${curFile}')">${t("delete")}</button></h2>
+    <p class="muted">${esc(d.timestamp)} · ${esc(d.username)}@${esc(d.hostname)} · ${esc(d.claude_dir || d.codex_dir || "")}</p>
+    <div class="summary-grid">
+      <div><span>WARN</span><strong class="warn" style="background:none">${s.warn ?? "?"}</strong></div>
+      <div><span>REVIEW</span><strong class="review" style="background:none">${s.review ?? "?"}</strong></div>
+      <div><span>INFO</span><strong class="info" style="background:none">${s.info ?? "?"}</strong></div>
+    </div>
+    <div class="tabs">
+      <button class="${curTab === "findings" ? "active" : ""}" onclick="setTab('findings')">findings</button>
+      ${invTabs.map(k => `<button class="${curTab === k ? "active" : ""}" onclick="setTab('${k}')">${esc(k)}</button>`).join("")}
+    </div>`;
+
+  if (curTab === "findings") {
+    html += `<div class="filterrow">${["WARN","REVIEW","INFO"].map(sv =>
+      `<label><input type="checkbox" ${sevFilter[sv] ? "checked" : ""} onchange="sevFilter['${sv}']=this.checked;drawSingle()">
+       <span class="badge ${sv.toLowerCase()}">${sv}</span></label>`).join("")}</div>`;
+    const rows = (d.findings || []).filter(f => sevFilter[f.severity]);
+    html += `<table><thead><tr><th>Sev</th><th>Section</th><th>Finding</th><th>Detail</th></tr></thead><tbody>` +
+      rows.map(f => `<tr>
+        <td><span class="badge ${esc(f.severity).toLowerCase()}">${esc(f.severity)}</span></td>
+        <td>${esc(f.section)}</td><td>${esc(f.message)}</td><td><code>${esc(f.detail)}</code></td></tr>`).join("") +
+      `</tbody></table>`;
+  } else {
+    const items = d[curTab] || [];
+    const cols = [...new Set(items.flatMap(i => Object.keys(i)))];
+    html += `<table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>` +
+      items.map(i => `<tr>${cols.map(c => `<td><code>${esc(i[c])}</code></td>`).join("")}</tr>`).join("") +
+      `</tbody></table>`;
+  }
+  $("content").innerHTML = html;
+}
+
+function setTab(t) { curTab = t; drawSingle(); }
+
+// ---------- diff view ----------
+async function renderDiff() {
+  const [a, b] = selected;
+  const sa = snapshots.find(s => s.file === a), sb = snapshots.find(s => s.file === b);
+  if (sa.tool !== sb.tool) {
+    $("content").innerHTML = `<p class="diff-del">${t("diff_tool_mismatch", esc(sa.tool), esc(sb.tool))}</p>`;
+    return;
+  }
+  // older = old, newer = new
+  const [oldS, newS] = sa.taken_at < sb.taken_at ? [sa, sb] : [sb, sa];
+  const diff = await api(`/api/diff?old=${encodeURIComponent(oldS.file)}&new=${encodeURIComponent(newS.file)}`);
+
+  const delta = (k) => {
+    const o = diff.summary_old[k] ?? 0, n = diff.summary_new[k] ?? 0, d = n - o;
+    return d === 0 ? "" : `<span class="${d > 0 ? "delta-up" : "delta-down"}">(${d > 0 ? "+" : ""}${d})</span>`;
+  };
+
+  let html = `
+    <h2>${t("compare_title")} <span class="tool-${oldS.tool}">${esc(oldS.tool)}</span></h2>
+    <p class="muted">${t("compare_range", fmtTaken(oldS.taken_at), fmtTaken(newS.taken_at))}</p>
+    <div class="summary-grid">
+      <div><span>WARN</span><strong>${diff.summary_old.warn ?? "?"} → ${diff.summary_new.warn ?? "?"} ${delta("warn")}</strong></div>
+      <div><span>REVIEW</span><strong>${diff.summary_old.review ?? "?"} → ${diff.summary_new.review ?? "?"} ${delta("review")}</strong></div>
+      <div><span>INFO</span><strong>${diff.summary_old.info ?? "?"} → ${diff.summary_new.info ?? "?"} ${delta("info")}</strong></div>
+    </div>`;
+
+  const fa = diff.findings.added, fr = diff.findings.removed;
+  if (!fa.length && !fr.length && !diff.sections.length) {
+    html += `<p style="color:var(--add)">${t("no_changes")}</p>`;
+  } else {
+    if (fa.length || fr.length) {
+      html += `<div class="section-block"><h3>${t("findings_changes")}</h3><ul class="flat">` +
+        fa.map(f => `<li class="diff-add">${esc(f)}</li>`).join("") +
+        fr.map(f => `<li class="diff-del">${esc(f)}</li>`).join("") + `</ul></div>`;
+    }
+    for (const sect of diff.sections) {
+      html += `<div class="section-block"><h3>${esc(sect.section)}</h3><ul class="flat">` +
+        sect.added.map(k => `<li class="diff-add">${esc(k)}</li>`).join("") +
+        sect.removed.map(k => `<li class="diff-del">${esc(k)}</li>`).join("") +
+        sect.changed.map(c => `<li>~ ${esc(c.key)}<ul class="flat" style="padding-left:18px">` +
+          Object.entries(c.changes).map(([f, v]) =>
+            `<li class="muted">${esc(f)}: <span class="diff-del">${esc(v.old)}</span> <span class="diff-add">${esc(v.new)}</span></li>`).join("") +
+          `</ul></li>`).join("") +
+        `</ul></div>`;
+    }
+  }
+  $("content").innerHTML = html;
+}
+
+// ---------- actions ----------
+async function runAudit() {
+  const tool = $("toolSel").value;
+  $("runBtn").disabled = true;
+  $("status").innerHTML = `<span class="spinner"></span> ${t("running", esc(tool))}`;
+  try {
+    const r = await api("/api/run", {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({tool})});
+    $("status").textContent = t("done", r);
+    selected = [r.file];
+    await loadSnapshots();
+    await render();
+  } catch (e) {
+    $("status").textContent = t("error") + e.message;
+  } finally {
+    $("runBtn").disabled = false;
+  }
+}
+
+async function delSnap(file) {
+  if (!confirm(t("delete_confirm", file))) return;
+  await api("/api/snapshot/delete", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({file})});
+  selected = selected.filter(f => f !== file);
+  await loadSnapshots();
+  await render();
+}
+
+applyLang();
+render();
+loadTools();
+loadSnapshots();
+</script>
+</body>
+</html>

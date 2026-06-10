@@ -1,0 +1,4 @@
+.env
+snapshots/*.json
+.claude/
+__pycache__/
