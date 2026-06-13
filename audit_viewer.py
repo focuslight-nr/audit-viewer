@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import webbrowser
@@ -26,7 +27,7 @@ def load_env(path):
     env = {}
     if not path.exists():
         return env
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -46,6 +47,12 @@ def _resolve(p, default):
 
 SNAP_DIR = _resolve("SNAPSHOTS_DIR", "snapshots")
 DEFAULT_PORT = int(ENV.get("PORT", "8765"))
+IS_WINDOWS = os.name == "nt"
+
+
+def _default_audit_script(name):
+    suffix = ".ps1" if IS_WINDOWS else ".sh"
+    return f"../{name}-audit/{name}_audit{suffix}"
 
 # Tool registry: id -> {label, script}.
 # Built-in tools can be re-pathed via CLAUDE_AUDIT_SCRIPT / CODEX_AUDIT_SCRIPT in .env.
@@ -53,11 +60,11 @@ DEFAULT_PORT = int(ENV.get("PORT", "8765"))
 TOOLS = {
     "claude": {
         "label": "claude-audit",
-        "script": _resolve("CLAUDE_AUDIT_SCRIPT", "../claude-audit/claude_audit.sh"),
+        "script": _resolve("CLAUDE_AUDIT_SCRIPT", _default_audit_script("claude")),
     },
     "codex": {
         "label": "codex-audit",
-        "script": _resolve("CODEX_AUDIT_SCRIPT", "../codex-audit/codex_audit.sh"),
+        "script": _resolve("CODEX_AUDIT_SCRIPT", _default_audit_script("codex")),
     },
 }
 for _k, _v in ENV.items():
@@ -82,7 +89,7 @@ def list_snapshots():
         if not m:
             continue
         try:
-            data = json.loads(f.read_text())
+            data = json.loads(f.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             continue
         summary = data.get("summary", {}) if isinstance(data, dict) else {}
@@ -103,7 +110,24 @@ def load_snapshot(name):
     if not SNAP_NAME_RE.match(name):
         raise ValueError("invalid snapshot name")
     p = SNAP_DIR / name
-    return json.loads(p.read_text())
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def audit_command(script):
+    """Return the platform-appropriate command for an audit script."""
+    suffix = script.suffix.lower()
+    if suffix == ".ps1":
+        runner = shutil.which("pwsh") or shutil.which("powershell")
+        if not runner:
+            raise FileNotFoundError("PowerShell executable not found")
+        return [runner, "-NoProfile", "-ExecutionPolicy", "Bypass",
+                "-File", str(script), "--json"]
+    if suffix == ".sh":
+        runner = shutil.which("zsh") or ("/bin/zsh" if Path("/bin/zsh").exists() else None)
+        if not runner:
+            raise FileNotFoundError("zsh executable not found")
+        return [runner, str(script), "--json"]
+    return [str(script), "--json"]
 
 
 def run_audit(tool):
@@ -114,7 +138,7 @@ def run_audit(tool):
     if not script.exists():
         raise FileNotFoundError(f"audit script not found: {script}")
     proc = subprocess.run(
-        ["/bin/zsh", str(script), "--json"],
+        audit_command(script),
         capture_output=True, text=True, timeout=300,
     )
     if not proc.stdout.strip():
@@ -126,7 +150,7 @@ def run_audit(tool):
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     fname = f"{tool}_{ts}.json"
     out = SNAP_DIR / fname
-    out.write_text(json.dumps(data, ensure_ascii=False, indent=1))
+    out.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     os.chmod(out, 0o600)
     return fname, data
 
