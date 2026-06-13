@@ -49,8 +49,12 @@ python3 audit_viewer.py --no-browser --port 8765
 python3 audit_viewer.py --snapshots-dir /path/to/snapshots
 ```
 
+On Windows, use `python audit_viewer.py` (or `py -3 audit_viewer.py`) from
+PowerShell.
+
 If no `.env` exists, the defaults assume the audit tools live in sibling
-directories (`../claude-audit`, `../codex-audit`).
+directories (`../claude-audit`, `../codex-audit`). The viewer automatically
+uses the PowerShell scripts on Windows and the zsh scripts on macOS.
 
 > On macOS, if the system python3 fails due to an unaccepted Xcode license,
 > use `/opt/homebrew/bin/python3 audit_viewer.py` or run `sudo xcodebuild -license`.
@@ -59,8 +63,8 @@ directories (`../claude-audit`, `../codex-audit`).
 
 | Key | Default | Description |
 |---|---|---|
-| `CLAUDE_AUDIT_SCRIPT` | `../claude-audit/claude_audit.sh` | Path to claude-audit |
-| `CODEX_AUDIT_SCRIPT` | `../codex-audit/codex_audit.sh` | Path to codex-audit |
+| `CLAUDE_AUDIT_SCRIPT` | OS-specific sibling script | Path to claude-audit |
+| `CODEX_AUDIT_SCRIPT` | OS-specific sibling script | Path to codex-audit |
 | `SNAPSHOTS_DIR` | `snapshots` | Snapshot storage directory |
 | `PORT` | `8765` | HTTP port (overridable with `--port`) |
 | `TOOL_<ID>` | — | Register an additional tool: `<label>:<script_path>` |
@@ -114,7 +118,8 @@ browse view. To include a section in diffs, register its identity fields in
 ## Requirements
 
 - Python 3.9+ (standard library only)
-- See each audit tool's README for its own requirements (macOS / zsh / jq)
+- Windows PowerShell 5.1+ or PowerShell 7+ on Windows
+- See each audit tool's README for its platform-specific requirements
 
 ## Security notes
 

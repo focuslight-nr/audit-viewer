@@ -44,7 +44,10 @@ python3 audit_viewer.py --no-browser --port 8765
 python3 audit_viewer.py --snapshots-dir /path/to/snapshots
 ```
 
-`.env` が無い場合は、監査ツールが隣接ディレクトリ（`../claude-audit`、`../codex-audit`）にある前提のデフォルト値で動作します。
+Windows では PowerShell から `python audit_viewer.py`（または
+`py -3 audit_viewer.py`）で起動します。
+
+`.env` が無い場合は、監査ツールが隣接ディレクトリ（`../claude-audit`、`../codex-audit`）にある前提のデフォルト値で動作します。Windows では PowerShell 版、macOS では zsh 版を自動選択します。
 
 > macOS のシステム python3 が Xcode ライセンス未同意で動かない場合は
 > `/opt/homebrew/bin/python3 audit_viewer.py` を使うか、`sudo xcodebuild -license` に同意してください。
@@ -53,8 +56,8 @@ python3 audit_viewer.py --snapshots-dir /path/to/snapshots
 
 | キー | デフォルト | 説明 |
 |---|---|---|
-| `CLAUDE_AUDIT_SCRIPT` | `../claude-audit/claude_audit.sh` | claude-audit のパス |
-| `CODEX_AUDIT_SCRIPT` | `../codex-audit/codex_audit.sh` | codex-audit のパス |
+| `CLAUDE_AUDIT_SCRIPT` | OS 別の隣接スクリプト | claude-audit のパス |
+| `CODEX_AUDIT_SCRIPT` | OS 別の隣接スクリプト | codex-audit のパス |
 | `SNAPSHOTS_DIR` | `snapshots` | スナップショット保存先 |
 | `PORT` | `8765` | HTTP ポート（`--port` でも上書き可） |
 | `TOOL_<ID>` | — | 追加ツールの登録: `<ラベル>:<スクリプトパス>` |
