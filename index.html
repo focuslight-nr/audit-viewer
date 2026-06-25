@@ -38,7 +38,7 @@ select{background:#0d1117;color:var(--fg);border:1px solid #30363d;border-radius
 .warn{background:var(--warn-bg);color:var(--warn-fg)}
 .review{background:var(--review-bg);color:var(--review-fg)}
 .info{background:var(--info-bg);color:var(--info-fg)}
-.tool-claude{color:#d2a8ff}.tool-codex{color:#7ee787}
+.tool-claude{color:#d2a8ff}.tool-codex{color:#7ee787}.tool-antigravity{color:#ff9e64}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
 th{color:var(--muted);font-weight:600;background:#161b22;position:sticky;top:0}
@@ -70,7 +70,7 @@ ul.flat li{padding:3px 0;font-size:13px;word-break:break-word}
 <body>
 <header>
   <h1>AUDIT-VIEWER</h1>
-  <span class="sub">claude-audit / codex-audit — run, browse, compare</span>
+  <span class="sub">claude-audit / codex-audit / antigravity-audit — run, browse, compare</span>
   <span style="margin-left:auto">
     <button id="langBtn" onclick="toggleLang()"></button>
   </span>
@@ -239,7 +239,7 @@ function drawSingle() {
   let html = `
     <h2><span class="tool-${meta.tool}">${esc(meta.tool || "")}</span> — ${esc(curFile)}
       <button class="danger" style="float:right" onclick="delSnap('${curFile}')">${t("delete")}</button></h2>
-    <p class="muted">${esc(d.timestamp)} · ${esc(d.username)}@${esc(d.hostname)} · ${esc(d.claude_dir || d.codex_dir || "")}</p>
+    <p class="muted">${esc(d.timestamp)} · ${esc(d.username)}@${esc(d.hostname)} · ${esc(d.claude_dir || d.codex_dir || d.antigravity_dir || "")}</p>
     <div class="summary-grid">
       <div><span>WARN</span><strong class="warn" style="background:none">${s.warn ?? "?"}</strong></div>
       <div><span>REVIEW</span><strong class="review" style="background:none">${s.review ?? "?"}</strong></div>

@@ -66,6 +66,10 @@ TOOLS = {
         "label": "codex-audit",
         "script": _resolve("CODEX_AUDIT_SCRIPT", _default_audit_script("codex")),
     },
+    "antigravity": {
+        "label": "antigravity-audit",
+        "script": _resolve("ANTIGRAVITY_AUDIT_SCRIPT", _default_audit_script("antigravity")),
+    },
 }
 for _k, _v in ENV.items():
     if _k.startswith("TOOL_") and ":" in _v:
@@ -171,6 +175,12 @@ INVENTORY_KEYS = {
         "apps": ("apps", ["id"]),
         "trusted_projects": ("trusted_projects", ["path"]),
         "automations": ("automations", ["id"]),
+        "skills": ("skills", ["source", "name"]),
+        "sensitive_files": ("sensitive_files", ["path"]),
+    },
+    "antigravity": {
+        "trusted_folders": ("trusted_folders", ["path"]),
+        "projects": ("projects", ["path"]),
         "skills": ("skills", ["source", "name"]),
         "sensitive_files": ("sensitive_files", ["path"]),
     },
