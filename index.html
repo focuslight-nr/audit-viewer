@@ -239,7 +239,7 @@ function drawSingle() {
   let html = `
     <h2><span class="tool-${meta.tool}">${esc(meta.tool || "")}</span> — ${esc(curFile)}
       <button class="danger" style="float:right" onclick="delSnap('${curFile}')">${t("delete")}</button></h2>
-    <p class="muted">${esc(d.timestamp)} · ${esc(d.username)}@${esc(d.hostname)} · ${esc(d.claude_dir || d.codex_dir || "")}</p>
+    <p class="muted">${esc(d.timestamp)} · ${esc(d.username)}@${esc(d.hostname)} · ${esc(d.claude_dir || d.codex_dir || d.antigravity_dir || "")}</p>
     <div class="summary-grid">
       <div><span>WARN</span><strong class="warn" style="background:none">${s.warn ?? "?"}</strong></div>
       <div><span>REVIEW</span><strong class="review" style="background:none">${s.review ?? "?"}</strong></div>

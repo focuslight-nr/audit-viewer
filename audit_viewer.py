@@ -179,6 +179,12 @@ INVENTORY_KEYS = {
         "sensitive_files": ("sensitive_files", ["path"]),
     },
     "antigravity": {
+        "mcp_servers": ("mcp_servers", ["name"]),
+        # Antigravity groups hooks under a name and allows several matchers per
+        # event, so both are part of a hook's identity.
+        "hooks": ("hooks", ["source", "name", "event", "matcher", "command"]),
+        "plugins": ("plugins", ["id"]),
+        "security_settings": ("security_settings", ["scope", "key"]),
         "trusted_folders": ("trusted_folders", ["path"]),
         "projects": ("projects", ["path"]),
         "skills": ("skills", ["source", "name"]),
