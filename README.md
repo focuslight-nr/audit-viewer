@@ -3,7 +3,8 @@
 [日本語版 README はこちら / Japanese README](README_ja.md)
 
 A local GUI tool to **run, browse, and compare** results from
-[claude-audit](../claude-audit) and [codex-audit](../codex-audit).
+[claude-audit](../claude-audit), [codex-audit](../codex-audit) and
+[antigravity-audit](../antigravity-audit).
 Its goal is unified management of local security audits across AI coding agents
 from different vendors, using a common output schema.
 
@@ -53,7 +54,9 @@ On Windows, use `python audit_viewer.py` (or `py -3 audit_viewer.py`) from
 PowerShell.
 
 If no `.env` exists, the defaults assume the audit tools live in sibling
-directories (`../claude-audit`, `../codex-audit`). The viewer automatically
+directories (`../claude-audit`, `../codex-audit`, `../antigravity-audit`).
+A tool whose script is missing is listed but greyed out, so you only need
+the ones you actually use. The viewer automatically
 uses the PowerShell scripts on Windows and the zsh scripts on macOS.
 
 > On macOS, if the system python3 fails due to an unaccepted Xcode license,
@@ -65,6 +68,7 @@ uses the PowerShell scripts on Windows and the zsh scripts on macOS.
 |---|---|---|
 | `CLAUDE_AUDIT_SCRIPT` | OS-specific sibling script | Path to claude-audit |
 | `CODEX_AUDIT_SCRIPT` | OS-specific sibling script | Path to codex-audit |
+| `ANTIGRAVITY_AUDIT_SCRIPT` | OS-specific sibling script | Path to antigravity-audit |
 | `SNAPSHOTS_DIR` | `snapshots` | Snapshot storage directory |
 | `PORT` | `8765` | HTTP port (overridable with `--port`) |
 | `TOOL_<ID>` | — | Register an additional tool: `<label>:<script_path>` |
