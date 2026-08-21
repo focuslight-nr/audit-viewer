@@ -162,7 +162,11 @@ INVENTORY_KEYS = {
     "claude": {
         "mcp_servers": ("mcp_servers", ["name"]),
         "projects": ("projects", ["path"]),
-        "hooks": ("hooks", ["event", "source", "command"]),
+        "hooks": ("hooks", ["event", "source", "type", "command"]),
+        "plugins": ("plugins", ["name", "scope"]),
+        "skills": ("skills", ["kind", "source", "name"]),
+        "monitors": ("monitors", ["plugin", "name"]),
+        "security_settings": ("security_settings", ["key", "source"]),
         "sensitive_files": ("sensitive_files", ["path"]),
     },
     "codex": {
