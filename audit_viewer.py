@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AUDIT-VIEWER - Local GUI for claude-audit / codex-audit results.
+"""AUDIT-VIEWER - Local GUI for claude-audit / codex-audit / antigravity-audit results.
 
 Run audits, save timestamped snapshots, and diff any two snapshots.
 Localhost-only HTTP server, stdlib only. Usage:
@@ -55,7 +55,7 @@ def _default_audit_script(name):
     return f"../{name}-audit/{name}_audit{suffix}"
 
 # Tool registry: id -> {label, script}.
-# Built-in tools can be re-pathed via CLAUDE_AUDIT_SCRIPT / CODEX_AUDIT_SCRIPT in .env.
+# Built-in tools can be re-pathed via <TOOL>_AUDIT_SCRIPT in .env.
 # Additional vendors: add TOOL_<id>=<label>:<script_path> lines to .env.
 TOOLS = {
     "claude": {
@@ -65,6 +65,10 @@ TOOLS = {
     "codex": {
         "label": "codex-audit",
         "script": _resolve("CODEX_AUDIT_SCRIPT", _default_audit_script("codex")),
+    },
+    "antigravity": {
+        "label": "antigravity-audit",
+        "script": _resolve("ANTIGRAVITY_AUDIT_SCRIPT", _default_audit_script("antigravity")),
     },
 }
 for _k, _v in ENV.items():
@@ -171,6 +175,12 @@ INVENTORY_KEYS = {
         "apps": ("apps", ["id"]),
         "trusted_projects": ("trusted_projects", ["path"]),
         "automations": ("automations", ["id"]),
+        "skills": ("skills", ["source", "name"]),
+        "sensitive_files": ("sensitive_files", ["path"]),
+    },
+    "antigravity": {
+        "trusted_folders": ("trusted_folders", ["path"]),
+        "projects": ("projects", ["path"]),
         "skills": ("skills", ["source", "name"]),
         "sensitive_files": ("sensitive_files", ["path"]),
     },

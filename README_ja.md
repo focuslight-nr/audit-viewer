@@ -2,7 +2,7 @@
 
 [English README](README.md)
 
-[claude-audit](../claude-audit) / [codex-audit](../codex-audit) の**実行・閲覧・日時比較**を行うローカル GUI ツールです。
+[claude-audit](../claude-audit) / [codex-audit](../codex-audit) / [antigravity-audit](../antigravity-audit) の**実行・閲覧・日時比較**を行うローカル GUI ツールです。
 各社 AI コーディングエージェントのローカル監査結果を、共通スキーマで統合管理することを目的としています。
 
 > **Unofficial project.** Not affiliated with Anthropic or OpenAI.
@@ -47,7 +47,7 @@ python3 audit_viewer.py --snapshots-dir /path/to/snapshots
 Windows では PowerShell から `python audit_viewer.py`（または
 `py -3 audit_viewer.py`）で起動します。
 
-`.env` が無い場合は、監査ツールが隣接ディレクトリ（`../claude-audit`、`../codex-audit`）にある前提のデフォルト値で動作します。Windows では PowerShell 版、macOS では zsh 版を自動選択します。
+`.env` が無い場合は、監査ツールが隣接ディレクトリ（`../claude-audit`、`../codex-audit`、`../antigravity-audit`）にある前提のデフォルト値で動作します。スクリプトが見つからないツールは一覧に出たうえで選択不可になるため、実際に使うものだけ用意すれば構いません。Windows では PowerShell 版、macOS では zsh 版を自動選択します。
 
 > macOS のシステム python3 が Xcode ライセンス未同意で動かない場合は
 > `/opt/homebrew/bin/python3 audit_viewer.py` を使うか、`sudo xcodebuild -license` に同意してください。
@@ -58,6 +58,7 @@ Windows では PowerShell から `python audit_viewer.py`（または
 |---|---|---|
 | `CLAUDE_AUDIT_SCRIPT` | OS 別の隣接スクリプト | claude-audit のパス |
 | `CODEX_AUDIT_SCRIPT` | OS 別の隣接スクリプト | codex-audit のパス |
+| `ANTIGRAVITY_AUDIT_SCRIPT` | OS 別の隣接スクリプト | antigravity-audit のパス |
 | `SNAPSHOTS_DIR` | `snapshots` | スナップショット保存先 |
 | `PORT` | `8765` | HTTP ポート（`--port` でも上書き可） |
 | `TOOL_<ID>` | — | 追加ツールの登録: `<ラベル>:<スクリプトパス>` |
